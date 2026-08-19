@@ -1,0 +1,83 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id              String           @id @default(uuid())
+  name            String
+  email           String           @unique
+  passwordHash    String
+  planTier        String           @default("FREE") // "FREE" | "STARTER_19" | "PRO_49" | "UNLIMITED_99"
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  analyses        Analysis[]
+  resumes         Resume[]
+  jobDescriptions JobDescription[]
+  payments        Payment[]
+}
+
+model Resume {
+  id             String     @id @default(uuid())
+  userId         String?
+  user           User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  filename       String
+  fileType       String
+  fileSize       Int
+  uploadMetadata String?
+  createdAt      DateTime   @default(now())
+  analyses       Analysis[]
+}
+
+model JobDescription {
+  id             String     @id @default(uuid())
+  userId         String?
+  user           User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title          String?
+  company        String?
+  description    String
+  targetKeywords String?
+  createdAt      DateTime   @default(now())
+  analyses       Analysis[]
+}
+
+model Analysis {
+  id                     String          @id @default(uuid())
+  userId                 String?
+  user                   User?           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resumeId               String?
+  resume                 Resume?         @relation(fields: [resumeId], references: [id], onDelete: SetNull)
+  jobDescriptionId       String?
+  jobDescription         JobDescription? @relation(fields: [jobDescriptionId], references: [id], onDelete: SetNull)
+  resumeName             String          @default("Resume")
+  jobTitle               String?
+  overallScore           Int
+  formattingScore        Int
+  contentScore           Int
+  keywordScore           Int
+  experienceScore        Int
+  contactScore           Int
+  atsCompatibilityScore  Int
+  jobMatchScore          Int?
+  resultsJson            String
+  createdAt              DateTime        @default(now())
+}
+
+model Payment {
+  id          String   @id @default(uuid())
+  userId      String?
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  planId      String   // "STARTER_19" | "PRO_49" | "UNLIMITED_99"
+  planName    String
+  amount      Int      // 19, 49, 99
+  upiRefId    String   // 12-digit UTR
+  payerName   String?
+  payerEmail  String
+  payerPhone  String?
+  status      String   @default("APPROVED") // "APPROVED" | "PENDING" | "REJECTED"
+  createdAt   DateTime @default(now())
+}
